@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>高质量发展进程模拟器</title>
+    <style>
+        body { margin:0; background:#f0f9ff; font-family: Arial, sans-serif; }
+        .timeline { height: 800vh; position: relative; }
+        .node { 
+            position: absolute; 
+            width: 280px; padding: 15px;
+            background: white; border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: 0.5s;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .node.active { opacity:1; transform: translateY(0); }
+        .chart-container { 
+            position: fixed; 
+            top:50px; right:50px; 
+            background: white; padding:20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .indicator {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.9);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .achievement-box {
+            display: none;
+            position: fixed;
+            top:50%;
+            left:50%;
+            transform: translate(-50%,-50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+        .timeline-line {
+            position: fixed;
+            left: 100px;
+            top:0;
+            bottom:0;
+            width: 4px;
+            background: #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="timeline-line"></div>
+    <div class="chart-container">
+        <canvas id="progressChart" width="400" height="300"></canvas>
+    </div>
+    
+    <div class="indicator" id="yearIndicator">🚩 当前年份：2015</div>
+    <div class="achievement-box" id="achievement">
+        <h2>2025年高质量发展成果</h2>
+        <ul id="achievement-list"></ul>
+    </div>
+
+    <div class="timeline"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// 发展事件数据集（每年至少1个事件）
+const events = [
+    {year:2015, title:"经济新常态", content:"GDP增速7%", icon:"📉"},
+    {year:2016, title:"供给侧改革深化", content:"去产能1亿吨钢铁", icon:"⚙️"},
+    {year:2017, title:"十九大提出高质量发展", content:"创新驱动战略", icon:"🚀"},
+    {year:2018, title:"蓝天保卫战", content:"PM2.5下降12%", icon:"🌳"},
+    {year:2019, title:"科创板设立", content:"支持硬科技企业", icon:"💹"},
+    {year:2020, title:"双循环新格局", content:"数字经济占比38%", icon:"🔄"},
+    {year:2021, title:"碳中和行动方案", content:"新能源装机超10亿千瓦", icon:"🌱"},
+    {year:2022, title:"专精特新计划", content:"培育5万家创新企业", icon:"🔬"},
+    {year:2023, title:"一带一路十周年", content:"中欧班列突破9万列", icon:"🚂"},
+    {year:2024, title:"新质生产力元年", content:"AI企业增长200%", icon:"🤖"},
+    {year:2025, title:"现代化产业体系", content:"研发强度2.8%", icon:"🏆"}
+];
+
+// 2025年成果数据
+const achievements = [
+    "🌐 全球创新指数排名第11位",
+    "🚗 新能源汽车产销量全球占比60%",
+    "🌾 粮食产量连续8年稳定在1.3万亿斤以上",
+    "🏭 战略性新兴产业占比GDP超17%",
+    "🌿 单位GDP能耗下降18%",
+    "📡 5G基站总数超400万个",
+    "🚄 高铁运营里程达5万公里",
+    "💡 数字经济核心产业占比10%"
+];
+
+// 初始化图表
+const ctx = document.getElementById('progressChart').getContext('2d');
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: Array.from({length:11}, (_,i) => 2015+i),
+        datasets: [{
+            label: 'GDP增速 (%)',
+            data: [7.0,6.8,6.7,6.5,6.1,5.6,5.3,5.2,5.1,5.0,5.0],
+            borderColor: '#4CAF50',
+            tension: 0.3
+        },{
+            label: '研发强度 (%)',
+            data: [2.1,2.1,2.1,2.2,2.4,2.5,2.6,2.7,2.8,2.8,2.9],
+            borderColor: '#2196F3',
+            tension: 0.3
+        }]
+    }
+});
+
+// 生成时间节点
+const timeline = document.querySelector('.timeline');
+events.forEach((event, index) => {
+    const node = document.createElement('div');
+    node.className = 'node';
+    node.innerHTML = `
+        <div style="font-size:24px">${event.icon}</div>
+        <h3 style="margin:5px 0">${event.year}年 - ${event.title}</h3>
+        <p style="color:#666">${event.content}</p>
+    `;
+    node.style.left = `${100 + (event.year-2015)*5}px`;
+    node.style.top = `${(event.year-2015)*300 + Math.sin(index)*50}px`;
+    timeline.appendChild(node);
+});
+
+// 自动滚动逻辑
+let currentYear = 2015;
+let scrollPos = 0;
+const yearElement = document.getElementById('yearIndicator');
+const nodes = document.querySelectorAll('.node');
+
+function updateNodes() {
+    nodes.forEach(node => {
+        const nodeYear = parseInt(node.querySelector('h3').textContent);
+        node.classList.toggle('active', nodeYear <= currentYear);
+    });
+}
+
+function showAchievements() {
+    document.getElementById('achievement').style.display = 'block';
+    const list = document.getElementById('achievement-list');
+    achievements.forEach(text => {
+        const li = document.createElement('li');
+        li.textContent = text;
+        li.style.margin = '10px 0';
+        list.appendChild(li);
+    });
+}
+
+function animate() {
+    if(currentYear < 2025) {
+        scrollPos += 3;
+        window.scrollTo(0, scrollPos);
+        
+        currentYear = 2015 + Math.floor(scrollPos/200);
+        yearElement.textContent = `🚩 当前年份：${currentYear}`;
+        
+        // 波动效果
+        timeline.style.transform = `translateY(${Math.sin(scrollPos/100)*5}px)`;
+        
+        updateNodes();
+        requestAnimationFrame(animate);
+    } else {
+        showAchievements();
+    }
+}
+
+window.addEventListener('load', () => {
+    setTimeout(animate, 2000); // 延迟启动
+});
+</script>
+</body>
+</html>
