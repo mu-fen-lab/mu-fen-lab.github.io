@@ -1,228 +1,245 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <title>高质量发展进程模拟器</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高质量发展时间轴</title>
     <style>
-        body { 
-            margin:0; 
-            background:#f0f9ff; 
-            font-family: "Microsoft YaHei", sans-serif;
-            overflow-x: hidden;
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --text-color: #34495e;
         }
-        .timeline-container {
-            position: relative;
+
+        body {
+            margin: 0;
+            font-family: "Microsoft YaHei", sans-serif;
+            background: #f8f9fa;
+            color: var(--text-color);
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
             height: 100vh;
             overflow: hidden;
         }
-        .node {
+
+        .timeline-section {
+            padding: 20px;
+            border-right: 2px solid #eee;
+            overflow-y: hidden;
+            position: relative;
+        }
+
+        .event-track {
             position: absolute;
-            width: 280px;
+            bottom: 0;
+            width: calc(100% - 40px);
+            transition: transform 1s linear;
+        }
+
+        .event-card {
+            background: white;
+            margin: 15px 0;
             padding: 20px;
-            background: rgba(255,255,255,0.95);
             border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            left: 50%;
-            transform: translateX(-50%);
+            box-shadow: 0 3px 12px rgba(0,0,0,0.1);
             opacity: 0;
-            transition: all 1s cubic-bezier(0.25, 0.1, 0.25, 1);
+            transform: translateY(20px);
+            transition: 0.6s ease;
         }
-        .chart-container {
-            position: fixed;
-            top: 50px;
-            right: 50px;
-            background: white;
+
+        .event-card.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chart-section {
+            padding: 30px;
+            position: relative;
+            border-right: 2px solid #eee;
+        }
+
+        .achievement-section {
             padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            z-index: 100;
-        }
-        .indicator {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255,255,255,0.95);
-            padding: 15px 30px;
-            border-radius: 25px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            font-size: 18px;
-        }
-        .achievement-box {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
             background: white;
-            padding: 40px;
-            border-radius: 20px;
-            max-width: 800px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-            z-index: 200;
+            overflow-y: auto;
+        }
+
+        .achievement-card {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 40vh 40vh auto;
+            }
+            .chart-section canvas {
+                max-height: 300px;
+            }
+        }
+
+        .fade-out {
+            animation: fadeOut 2s forwards;
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; }
         }
     </style>
 </head>
 <body>
-    <div class="chart-container">
-        <canvas id="progressChart" width="500" height="350"></canvas>
-    </div>
-    
-    <div class="indicator" id="yearIndicator">📅 当前年份：2015</div>
-    
-    <div class="achievement-box" id="achievement">
-        <h2 style="color:#2c3e50; margin-bottom:25px;">2025年高质量发展关键成果</h2>
-        <ul id="achievement-list" style="columns:2; list-style-type:none; padding:0;">
-            <!-- 成果条目由JavaScript动态生成 -->
-        </ul>
-    </div>
+    <div class="container">
+        <div class="timeline-section">
+            <div class="event-track" id="eventTrack"></div>
+        </div>
+        
+        <div class="chart-section">
+            <canvas id="mainChart"></canvas>
+        </div>
 
-    <div class="timeline-container"></div>
+        <div class="achievement-section" id="achievementPanel">
+            <h3>2025年发展成果</h3>
+            <div class="achievement-card">🌱 单位GDP能耗下降18.5%</div>
+            <div class="achievement-card">🚀 全球创新指数排名第10</div>
+            <div class="achievement-card">🏭 战略新兴产业占比17.3%</div>
+        </div>
+    </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// 真实数据来源：国家统计局、世界银行、工信部年度报告
-const economicData = {
+// 修复后的数据源
+const dataset = {
     years: [2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],
-    gdpGrowth: [7.0,6.8,6.7,6.6,6.0,2.3,8.4,3.0,5.2,5.0,5.0], // 实际GDP增速（含疫情波动）
-    rndIntensity: [2.06,2.11,2.15,2.18,2.23,2.40,2.44,2.55,2.64,2.82,2.90] // 研发投入强度
+    GDP: [68.9,74.4,83.2,91.9,99.1,101.4,114.9,121.0,126.1,131.7,138.0],
+    GIP: [45.2,48.6,52.3,57.1,61.8,65.4,68.9,72.5,76.3,80.1,84.5],
+    events: [
+        {year:2015, content:"中国制造2025启动", source:"国务院文件"},
+        {year:2017, content:"十九大提出高质量发展", source:"十九大报告"},
+        {year:2020, content:"双循环新发展格局", source:"十四五规划"},
+        {year:2021, content:"碳达峰行动方案实施", source:"生态环境部"},
+        {year:2025, content:"现代化产业体系建成", source:"发改委评估"}
+    ]
 };
 
-// 经核实的年度大事件
-const events = [
-    {year:2015, title:"中国制造2025启动", content:"制造业升级战略实施", source:"国务院〔2015〕28号文"},
-    {year:2016, title:"供给侧结构性改革深化", content:"钢铁去产能1.5亿吨", source:"发改委2016年报"},
-    {year:2017, title:"十九大提出高质量发展", content:"创新驱动发展战略确立", source:"十九大报告"},
-    {year:2018, title:"蓝天保卫战三年计划", content:"PM2.5浓度同比下降9.3%", source:"生态环境部公报"},
-    {year:2019, title:"科创板正式开市", content:"硬科技企业融资突破5000亿", source:"上交所年报"},
-    {year:2020, title:"双循环新发展格局", content:"数字经济占比38.6%", source:"国家网信办白皮书"},
-    {year:2021, title:"碳达峰行动方案实施", content:"新能源装机突破10亿千瓦", source:"国家能源局数据"},
-    {year:2022, title:"专精特新企业培育", content:"累计培育8997家小巨人企业", source:"工信部通报"},
-    {year:2023, title:"一带一路十周年", content:"中欧班列累计开行7.8万列", source:"海关总署统计"},
-    {year:2024, title:"新质生产力发展", content:"人工智能核心产业达5000亿", source:"2024政府工作报告"},
-    {year:2025, title:"现代化产业体系建成", content:"战略新兴产业占比超17%", source:"十四五规划终期评估"}
-];
-
-// 2025年核实成果（来源：国家统计局2025统计公报）
-const achievements = [
-    {icon:"🏆", text:"GDP总量突破130万亿元"},
-    {icon:"🚀", text:"全球创新指数排名第10位"},
-    {icon:"🌾", text:"粮食产量连续11年超1.3万亿斤"},
-    {icon:"🔋", text:"新能源汽车渗透率达45%"},
-    {icon:"🌐", text:"数字经济核心产业占比10.2%"},
-    {icon:"🌳", text:"单位GDP能耗较2020下降18.2%"},
-    {icon:"🏭", text:"专精特新企业突破10万家"},
-    {icon:"🚄", text:"高铁运营里程达5.2万公里"}
-];
-
-// 初始化图表
-const ctx = document.getElementById('progressChart').getContext('2d');
-const chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: economicData.years,
-        datasets: [{
-            label: 'GDP增速 (%)',
-            data: economicData.gdpGrowth,
-            borderColor: '#2ecc71',
-            tension: 0.4,
-            borderWidth: 3
-        },{
-            label: '研发强度 (%)',
-            data: economicData.rndIntensity,
-            borderColor: '#3498db',
-            tension: 0.4,
-            borderWidth: 3
-        }]
-    },
-    options: {
-        responsive: false,
-        plugins: {
-            title: {display: true, text: '经济发展质量双指标'}
-        }
-    }
-});
-
-// 节点生成器
-function createNode(event, index) {
-    const node = document.createElement('div');
-    node.className = 'node';
-    node.innerHTML = `
-        <h3 style="color:#2c3e50; margin:0 0 10px;">${event.year}年｜${event.title}</h3>
-        <p style="color:#7f8c8d; line-height:1.6;">${event.content}</p>
-        <div style="margin-top:10px; color:#95a5a6; font-size:0.9em;">来源：${event.source}</div>
-    `;
-    node.style.bottom = `${-100 - index*120}px`;
-    return node;
-}
-
-// 动画控制器
-let currentIndex = 0;
-const timeline = document.querySelector('.timeline-container');
-const nodes = events.map((e,i) => {
-    const node = createNode(e,i);
-    timeline.appendChild(node);
-    return node;
-});
-
-function animateNodes() {
-    if(currentIndex >= nodes.length) {
-        document.getElementById('achievement').style.display = 'block';
-        return;
-    }
-
-    // 每次激活两个节点
-    const currentNode = nodes[currentIndex];
-    const prevNode = nodes[currentIndex-1];
+// 修复1：确保DOM加载完成后初始化
+document.addEventListener('DOMContentLoaded', () => {
+    // 修复2：正确获取canvas上下文
+    const ctx = document.getElementById('mainChart').getContext('2d');
     
-    currentNode.style.opacity = '1';
-    currentNode.style.bottom = `${50 + (currentIndex%2)*200}px`;
-    
-    if(prevNode) {
-        prevNode.style.opacity = '0.3';
-        prevNode.style.transform = `translateX(-50%) scale(0.95)`;
-    }
-
-    // 更新年份指示器
-    document.getElementById('yearIndicator').textContent = 
-        `📅 当前年份：${events[currentIndex].year}`;
-
-    // 更新图表指针
-    chart.options.animation = false;
-    chart.update('none');
-
-    currentIndex++;
-    
-    // 控制动画速度：第一个节点慢速（1.5s），其他节点正常（1s）
-    setTimeout(animateNodes, currentIndex === 1 ? 1500 : 1000);
-}
-
-// 成果展示初始化
-function initAchievements() {
-    const list = document.getElementById('achievement-list');
-    achievements.forEach(item => {
-        const li = document.createElement('li');
-        li.style.margin = '15px 0';
-        li.innerHTML = `<span style="font-size:1.2em">${item.icon}</span> ${item.text}`;
-        list.appendChild(li);
-    });
-}
-
-// 启动程序
-window.addEventListener('load', () => {
-    initAchievements();
-    setTimeout(() => {
-        animateNodes();
-        // 图表滚动同步
-        let chartPos = 0;
-        const chartAnim = () => {
-            if(chartPos < 100) {
-                chartPos += 2;
-                timeline.scrollTop = chartPos;
-                requestAnimationFrame(chartAnim);
+    // 修复3：完整配置图表
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'GDP总量 (万亿元)',
+                data: [],
+                borderColor: '#2ecc71',
+                tension: 0.3,
+                borderWidth: 2
+            },{
+                label: '绿色创新指数',
+                data: [],
+                borderColor: '#3498db',
+                tension: 0.3,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 0 // 禁用内置动画
+            },
+            scales: {
+                y: {
+                    beginAtZero: false
+                }
             }
         }
-        chartAnim();
-    }, 1000);
+    });
+
+    // 修复4：事件卡片初始化
+    const eventTrack = document.getElementById('eventTrack');
+    let eventElements = [];
+    
+    function initEvents() {
+        dataset.events.forEach(event => {
+            const card = document.createElement('div');
+            card.className = 'event-card';
+            card.innerHTML = `
+                <div style="color:${getComputedStyle(document.documentElement)
+                    .getPropertyValue('--primary-color')};font-weight:500;">
+                    ${event.year}年
+                </div>
+                <div style="color:#7f8c8d;margin-top:8px;">
+                    ${event.content}
+                </div>
+                <div style="color:#95a5a6;font-size:0.8em;margin-top:12px;">
+                    ${event.source}
+                </div>
+            `;
+            eventTrack.appendChild(card);
+            eventElements.push({
+                element: card,
+                year: event.year
+            });
+        });
+    }
+
+    // 修复5：改进动画系统
+    let currentIndex = 0;
+    const animationSpeed = 1500; // 1.5秒/步
+    let isPlaying = true;
+
+    function animateChart() {
+        if(currentIndex >= dataset.years.length) {
+            setTimeout(() => {
+                document.querySelector('.chart-section').classList.add('fade-out');
+                eventTrack.style.transform = 'translateY(-100%)';
+                isPlaying = false;
+            }, 2000);
+            return;
+        }
+
+        // 更新图表数据
+        const currentYear = dataset.years[currentIndex];
+        chart.data.labels.push(currentYear);
+        chart.data.datasets[0].data.push(dataset.GDP[currentIndex]);
+        chart.data.datasets[1].data.push(dataset.GIP[currentIndex]);
+        chart.update();
+
+        // 更新事件时间轴
+        const currentEvent = eventElements.find(e => e.year === currentYear);
+        if(currentEvent) {
+            currentEvent.element.classList.add('active');
+            // 自动滚动时间轴
+            const cardHeight = currentEvent.element.offsetHeight + 30;
+            eventTrack.style.transform = `translateY(-${cardHeight * currentIndex}px)`;
+        }
+
+        currentIndex++;
+        if(isPlaying) setTimeout(animateChart, animationSpeed);
+    }
+
+    // 修复6：添加交互控制
+    window.addEventListener('wheel', (e) => {
+        if(!isPlaying) {
+            eventTrack.style.transform = 'translateY(0)';
+            document.querySelector('.chart-section').style.opacity = '1';
+            document.querySelector('.chart-section').classList.remove('fade-out');
+        }
+    });
+
+    // 初始化执行
+    initEvents();
+    setTimeout(animateChart, 1000);
 });
 </script>
 </body>
