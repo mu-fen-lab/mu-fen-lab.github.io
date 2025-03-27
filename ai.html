@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI智能招聘平台</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6c5ce7;
+            --success-color: #00b894;
+            --danger-color: #d63031;
+        }
+
+        body {
+            background: linear-gradient(135deg, #2d3436 0%, #1a1a1a 100%);
+            color: #fff;
+            min-height: 100vh;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .navbar {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary-color);
+        }
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .legal-badge {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 15px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .qrcode-container {
+            border: 2px solid var(--primary-color);
+            border-radius: 15px;
+            padding: 10px;
+            background: white;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .application-form {
+            background: rgba(255,255,255,0.08);
+            border-radius: 15px;
+            padding: 2rem;
+        }
+
+        .nav-link {
+            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-color) !important;
+            border-bottom-color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-robot me-2"></i>AI招聘平台
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#apply">职位申请</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#withdraw">余额提现</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#group">官方群聊</a>
+                    </li>
+                </ul>
+                <div id="userInfo" class="d-none align-items-center">
+                    <img src="images/default-avatar.jpg" 
+                         class="user-avatar me-2"
+                         id="userAvatar"
+                         onerror="this.src='images/default-avatar.jpg'">
+                    <span id="username" class="me-3"></span>
+                    <button id="logoutBtn" class="btn btn-outline-danger btn-sm">退出</button>
+                </div>
+                <button id="loginBtn" class="btn btn-outline-light">登录/注册</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5 mt-5">
+        <!-- 申请界面 -->
+        <section id="apply" class="mb-5">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="application-form">
+                        <h3 class="mb-4"><i class="fas fa-file-alt me-2"></i>职位申请</h3>
+                        <div class="mb-3">
+                            <label class="form-label">选择职位</label>
+                            <select class="form-select bg-dark text-white">
+                                <option>AI数据标注员</option>
+                                <option>图像识别专员</option>
+                                <option>语音标注师</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">上传简历</label>
+                            <input type="file" class="form-control bg-dark text-white">
+                        </div>
+                        <button class="btn btn-primary w-100" onclick="submitApplication()">
+                            <i class="fas fa-paper-plane me-2"></i>立即申请
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 提现模块 -->
+        <section id="withdraw" class="mb-5">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card p-4 text-center">
+                        <h4 class="mb-4"><i class="fas fa-wallet me-2"></i>余额提现</h4>
+                        <button id="withdrawBtn" class="btn btn-lg btn-success pulse">
+                            立即提现 ¥800
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 兼职群聊 -->
+        <section id="group" class="mb-5">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card p-4 text-center">
+                        <h4 class="mb-3"><i class="fas fa-comments me-2"></i>官方交流群</h4>
+                        <div class="qrcode-container mx-auto mb-3">
+                            <img src="wechat-qrcode.png" class="img-fluid">
+                        </div>
+                        <div class="text-muted">
+                            <i class="fas fa-user-tie me-2"></i>
+                            负责人：魏祝冠 138-0013-8000
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-sm btn-outline-light" 
+                                    onclick="downloadQR()">
+                                <i class="fas fa-download me-2"></i>下载二维码
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 法律标识 -->
+    <div class="legal-badge">
+        <i class="fas fa-balance-scale me-2"></i>
+        <span>京ICP备12345678号</span>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // 虚拟用户数据
+        const users = [
+            { id: 1, name: '用户宋薇', avatar: 'images/1.jpg' },
+            { id: 2, name: '用户徐莫缇', avatar: 'images/3.jpg' },
+            { id: 3, name: '用户江星眠', avatar: 'images/2.jpg' }
+        ];
+
+        // 状态管理
+        let state = {
+            currentUser: null,
+            isLoggedIn: localStorage.getItem('isLoggedIn') === 'true',
+            withdrawStatus: localStorage.getItem('withdrawStatus') || 'pending',
+            withdrawAttempts: parseInt(localStorage.getItem('withdrawAttempts')) || 0
+        };
+
+        // 初始化
+        function init() {
+            // 恢复登录状态
+            if(state.isLoggedIn) {
+                const storedUser = users.find(u => u.name === localStorage.getItem('username'));
+                if(storedUser) {
+                    state.currentUser = storedUser;
+                    document.getElementById('userAvatar').src = storedUser.avatar;
+                    document.getElementById('username').textContent = storedUser.name;
+                }
+            }
+            updateLoginState();
+            updateWithdrawButton();
+        }
+
+        // 登录功能
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            if(!state.isLoggedIn) {
+                const user = users[Math.floor(Math.random() * users.length)];
+                state.currentUser = user;
+                state.isLoggedIn = true;
+                
+                // 存储状态
+                localStorage.setItem('isLoggedIn', true);
+                localStorage.setItem('username', user.name);
+                
+                // 更新界面
+                document.getElementById('userAvatar').src = user.avatar;
+                document.getElementById('username').textContent = user.name;
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: `欢迎回来，${user.name}!`,
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+                
+                updateLoginState();
+                updateWithdrawButton();
+            }
+        });
+
+        // 退出登录
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.clear();
+            state = {
+                currentUser: null,
+                isLoggedIn: false,
+                withdrawStatus: 'pending',
+                withdrawAttempts: 0
+            };
+            document.getElementById('userAvatar').src = 'images/default-avatar.jpg';
+            document.getElementById('username').textContent = '';
+            updateLoginState();
+            updateWithdrawButton();
+            Swal.fire('已退出登录！', '', 'success');
+        });
+
+        // 提现功能
+        document.getElementById('withdrawBtn').addEventListener('click', () => {
+            if (!state.isLoggedIn) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: '请先登录',
+                    confirmButtonText: '确定'
+                });
+                return;
+            }
+
+            if(state.withdrawStatus === 'success') return;
+
+            const isSuccess = Math.random() > 0.5;
+            
+            if(isSuccess) {
+                state.withdrawStatus = 'success';
+                localStorage.setItem('withdrawStatus', 'success');
+                showWithdrawResult(true);
+            } else {
+                state.withdrawAttempts++;
+                localStorage.setItem('withdrawAttempts', state.withdrawAttempts);
+                showWithdrawResult(false);
+                
+                if(state.withdrawAttempts >= 3) {
+                    Swal.fire({
+                        title: '提现失败',
+                        html: '请联系管理员处理<br><img src="wechat-qrcode.png" style="width:200px">',
+                        icon: 'error'
+                    });
+                }
+            }
+            
+            updateWithdrawButton();
+        });
+
+        // 更新提现按钮状态
+        function updateWithdrawButton() {
+            const btn = document.getElementById('withdrawBtn');
+            
+            if (!state.isLoggedIn) {
+                btn.disabled = true;
+                btn.innerHTML = '请先登录';
+                btn.classList.remove('pulse', 'btn-success');
+                btn.classList.add('btn-secondary');
+                return;
+            }
+
+            if(state.withdrawStatus === 'success') {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-check-circle me-2"></i>已提现';
+                btn.classList.remove('pulse', 'btn-success');
+                btn.classList.add('btn-secondary');
+            } else if(state.withdrawAttempts >= 3) {
+                btn.disabled = true;
+                btn.innerHTML = '提现功能已锁定';
+                btn.classList.remove('pulse', 'btn-success');
+                btn.classList.add('btn-danger');
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '立即提现 ¥800';
+                btn.classList.add('pulse', 'btn-success');
+                btn.classList.remove('btn-secondary', 'btn-danger');
+            }
+        }
+
+        // 辅助函数
+        function submitApplication() {
+            Swal.fire({
+                icon: 'success',
+                title: '申请已提交!',
+                html: '请扫码加入官方群查看进度<br><img src="wechat-qrcode.png" style="width:200px">',
+                confirmButtonText: '确定'
+            });
+        }
+
+        function downloadQR() {
+            const link = document.createElement('a');
+            link.download = 'official-qrcode.png';
+            link.href = 'wechat-qrcode.png';
+            link.click();
+        }
+
+        function updateLoginState() {
+            const userInfo = document.getElementById('userInfo');
+            const loginBtn = document.getElementById('loginBtn');
+            
+            if(state.isLoggedIn) {
+                userInfo.classList.remove('d-none');
+                loginBtn.classList.add('d-none');
+            } else {
+                userInfo.classList.add('d-none');
+                loginBtn.classList.remove('d-none');
+            }
+        }
+
+        function showWithdrawResult(isSuccess) {
+            Swal.fire({
+                icon: isSuccess ? 'success' : 'error',
+                title: isSuccess ? '提现成功！' : '提现失败',
+                text: isSuccess ? '800元已到账' : '请稍后再试',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+
+        // 初始化执行
+        init();
+    </script>
+</body>
+</html>
