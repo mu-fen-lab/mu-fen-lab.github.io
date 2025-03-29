@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI智能招聘平台</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+    <!-- 装饰元素 -->
+    <div class="floating-decoration"></div>
+    <div class="floating-decoration"></div>
+    
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-robot me-2"></i>AI招聘平台
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#apply">职位申请</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#withdraw">余额提现</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#group">官方群聊</a>
+                    </li>
+                </ul>
+                <div id="userInfo" class="d-none align-items-center">
+                    <img src="images/default-avatar.jpg" 
+                         class="user-avatar me-2"
+                         id="userAvatar"
+                         onerror="this.src='images/default-avatar.jpg'">
+                    <span id="username" class="me-3"></span>
+                    <button id="logoutBtn" class="btn btn-outline-danger btn-sm">退出</button>
+                </div>
+                <button id="loginBtn" class="btn btn-outline-light">登录/注册</button>
+                <button class="btn btn-sm btn-outline-light ms-2" onclick="openFeedback()">
+                    <i class="fas fa-comment-dots me-1"></i>反馈
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5 mt-5">
+        <!-- 申请界面 -->
+        <section id="apply" class="mb-5">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="application-form">
+                        <h3 class="mb-4 text-gradient"><i class="fas fa-file-alt me-2"></i>职位申请</h3>
+                        <!-- 检查职位选择部分的HTML结构 -->
+                        <div class="mb-3">
+                            <label class="form-label">选择职位</label>
+                            <select class="form-select" id="jobSelect">
+                                <!-- 添加默认选项，确保下拉菜单有内容 -->
+                                <option value="" disabled selected>请选择职位</option>
+                                <option value="1">AI数据标注员</option>
+                                <option value="2">图像识别专员</option>
+                                <option value="3">语音标注师</option>
+                                <option value="4">自然语言处理工程师</option>
+                                <option value="5">机器学习算法专家</option>
+                            </select>
+                        </div>
+                        <div id="jobDetails" class="mb-3"></div>
+                        <div class="mb-4">
+                            <label class="form-label">上传简历</label>
+                            <input type="file" class="form-control bg-dark text-white" id="resumeFile">
+                        </div>
+                        <button class="btn btn-primary w-100" onclick="submitApplication()">
+                            <i class="fas fa-paper-plane me-2"></i>立即申请
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 提现模块 -->
+        <section id="withdraw" class="mb-5">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card p-4 text-center">
+                        <h4 class="mb-4"><i class="fas fa-wallet me-2"></i>余额提现</h4>
+                        <div class="mb-3">
+                            <h5>当前余额</h5>
+                            <h2 id="userBalance" class="display-4 text-success-gradient">¥0</h2>
+                        </div>
+                        <div class="progress mb-4" style="height: 10px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 80%;" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <button id="withdrawBtn" class="btn btn-lg btn-success pulse">
+                            立即提现 ¥800
+                        </button>
+                        <div class="mt-3 text-muted small">
+                            <i class="fas fa-info-circle me-1"></i>
+                            提现将在1-3个工作日内到账
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 兼职群聊 -->
+        <section id="group" class="mb-5">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card p-4 text-center">
+                        <h4 class="mb-3"><i class="fas fa-comments me-2"></i>官方交流群</h4>
+                        <div class="qrcode-container mx-auto mb-3">
+                            <img src="wechat-qrcode.png" class="img-fluid">
+                        </div>
+                        <div class="text-muted">
+                            <i class="fas fa-user-tie me-2 icon-hover"></i>
+                            负责人：<span class="text-gradient">魏祝冠</span> 138-0013-8000
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-sm btn-outline-light" 
+                                    onclick="downloadQR()">
+                                <i class="fas fa-download me-2"></i>下载二维码
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 平台优势 -->
+        <section id="advantages" class="mb-5">
+            <div class="row justify-content-center">
+                <div class="col-md-10">
+                    <h3 class="text-center mb-4 text-gradient">平台优势</h3>
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="card h-100 p-3 text-center">
+                                <div class="feature-icon mb-3">
+                                    <i class="fas fa-bolt fa-2x text-gradient"></i>
+                                </div>
+                                <h5>高效匹配</h5>
+                                <p class="text-muted">AI算法精准匹配职位需求，提高应聘成功率</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100 p-3 text-center">
+                                <div class="feature-icon mb-3">
+                                    <i class="fas fa-shield-alt fa-2x text-gradient"></i>
+                                </div>
+                                <h5>安全可靠</h5>
+                                <p class="text-muted">资金安全保障，提现快速到账</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100 p-3 text-center">
+                                <div class="feature-icon mb-3">
+                                    <i class="fas fa-headset fa-2x text-gradient"></i>
+                                </div>
+                                <h5>专业服务</h5>
+                                <p class="text-muted">一对一职业顾问，全程指导服务</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 法律标识 -->
+    <div class="legal-badge">
+        <i class="fas fa-balance-scale me-2"></i>
+        <span>京ICP备12345678号</span>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="script.js"></script>
+</body>
+</html>
